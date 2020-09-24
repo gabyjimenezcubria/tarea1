@@ -1,0 +1,102 @@
+---
+title: "tarea1_LUNAS_gaby"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Tarea 1 ####
+#### Ana Gabriela Jiménez #### 
+
+
+```{r message=FALSE, cache=FALSE, warning=FALSE}
+# Setup ----
+Sys.setlocale("LC_ALL", "es_ES.UTF-8") 
+options(scipen=999)
+
+
+## Librerías ----
+pacman::p_load(sf, tidyverse, leaflet, ggthemes, plotly)
+library(DT)
+library(kableExtra)
+```
+Ahora carguemos y leamos las bases de datos que utilizaremos y guardémoslas como objetos
+```{r}
+## Bases de datos #
+lunas<-
+st_read("01_datos/lunas.geojson")
+colonias <-
+st_read("01_datos/coloniascdmx.geojson")
+```
+La primera base de datos es sobre los centros de servicio para mujeres que existen en la CDMX y se llama "Lunas"
+La segunda base de datos son los polígonos de la CDMX y se llama "Colonias"
+```{r}
+glimpse(lunas)
+class(lunas)
+plot(lunas, max.plot = 1) 
+
+st_crs(lunas)
+```
+Vemos que la base de datos "lunas" tiene 27 observaciones y 10 variables
+```{r}
+## Mapa interactivo #
+
+leaflet() %>% 
+  addTiles() %>% 
+  addCircleMarkers(data = lunas, 
+                   label = lunas$alcaldia, 
+                   popup = lunas$servicios, 
+                   color = "purple")
+```
+En este mapa podemos ver la ubicación de los centros de servicio para mujeres dentro de la CDMX señalado con puntos violeta. Al pasar el cursor por los puntos se despliega el nombre de la delegación a la que corresponde cada centro. 
+```{r}
+### Gráfica con ggplot #
+
+lunas %>% 
+  group_by(alcaldia) %>% 
+  count(alcaldia) %>%
+  ggplot()+
+  geom_col(aes(x=alcaldia, y=n),fill= "purple")+
+  coord_flip()
+```
+En esta tabla podemos observar cuántas lunas o centros de servicio para mujeres existen por delegación
+```{r, echo = FALSE}
+
+####### 
+
+
+### Mapa estático GABY ###
+
+st_geometry(lunas)
+
+ggplot() + 
+  geom_sf(data = colonias, color = "gray", alpha = 0.3, fill="white")+
+  geom_sf(data = lunas, color = "purple", alpha = 0.3) + 
+  # coord_sf(xlim = c(-99.3, -99.0), 
+  #          ylim = c(19.1, 19.4), expand = TRUE) +
+  labs(title = "Servicios de asesorías para mujeres en la CDMX", 
+       subtitle = "Datos de 2019. Ciudad de México", 
+       caption = "Cada punto violeta representa una 'luna' o centro de servicio para mujeres en la CDMX.\nFuente: https://datos.cdmx.gob.mx/explore/dataset/lunas/export/") + 
+ 
+  theme_bw() + 
+  theme(axis.text = element_blank(), 
+        panel.grid = element_blank(), 
+        panel.border = element_blank(), 
+        panel.background = element_rect(),
+        axis.ticks = element_blank()) + 
+  theme(plot.title = element_text(hjust = 0.5, 
+                                  colour = "gray10", 
+                                  family = "Arial", 
+                                  face = "bold", 
+                                  size = 15), 
+        plot.subtitle = element_text(hjust = 0.5, 
+                                     colour = "gray50", 
+                                     family = "Arial", 
+                                     face = "bold", 
+                                     size = 15), 
+        plot.caption = element_text(colour = "gray50", 
+                                    hjust = 1))
+```
+En este mapa podemos observar la distribución de las lunas sobre el territorio de la CDMX y es posible ver cómo muchas de ellas se ubican en la zona centro de la capital, mientas que hacia el sur disminuye su concentración. En algunas delegaciones existen centros que se podrían considerar como casi vecinos, mientras que en la zona rural casi no hay. 
